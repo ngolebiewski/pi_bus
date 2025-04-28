@@ -1,3 +1,4 @@
+# PyGame boilerplate from pygame.org
 import pygame
 
 pygame.init()
