@@ -4,11 +4,13 @@ from dotenv import load_dotenv
 import os
 
 # Hiding my email address from Github for some reason...
+# Email is what the API requires in lieu of a key
 load_dotenv()
 EMAIL = os.getenv("EMAIL")
 
 zip_code = int(input('What is your zip code?:'))
 
+# Example: https://nominatim.openstreetmap.org/search.php?q=10001+us&format=jsonv2
 url = f'https://nominatim.openstreetmap.org/search?q={zip_code}+us&format=jsonv2'
 headers = {
         'User-Agent': f'Pi Bus Time/0.1 ({EMAIL})' 

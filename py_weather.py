@@ -2,8 +2,8 @@ import requests
 from datetime import datetime, timedelta
 
 # URLs
-hourly_url = "https://api.weather.gov/gridpoints/OKX/33,35/forecast/hourly"
-daily_url = "https://api.weather.gov/gridpoints/OKX/33,35/forecast"
+hourly_url = "https://api.weather.gov/gridpoints/OKX/33,36/forecast/hourly"
+daily_url = "https://api.weather.gov/gridpoints/OKX/33,36/forecast"
 
 # Fetch hourly and daily data
 hourly_resp = requests.get(hourly_url)
