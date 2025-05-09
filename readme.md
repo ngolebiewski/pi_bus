@@ -4,8 +4,10 @@ Will display on a Sensehat LED display (or other display) realtime information f
 # Set up
 1. Setup virtual environment and acitvate
 2. Get an API key from the MTA `https://register.developer.obanyc.com/`
-3. Add MTA_API_KEY to .env
+3. Add MTA_API_KEY and EMAIL to .env
 4. pip install -r requirements.txt
+
+# Demo with SenseHat!
 
 # Plans
 1. Use Adafruit PiTFT Plus 320x240 2.8" TFT + Capacitive Touchscreen
