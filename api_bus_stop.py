@@ -4,89 +4,117 @@ import requests
 import json
 from datetime import datetime, timezone
 
+###############
+# Globals     #
+###############
+
 load_dotenv()
 API_KEY = os.getenv("MTA_API_KEY")
-STOP_ID = "401220"
+STOP_ID = "401220" # This should become a user settable field!!!!!!! Maybe make an argparser with this number as the default.
 
-
-class busData:
-    def __init__(self, line, destination, eta):
-        self.line = line
-        self.destination = destination
-        self.eta = eta
-    
-    #TKTK
-    
-    # methods: minutes_left, eta_string
-
-
-# --- Step 1: Get real-time bus info ---
-stop_monitoring_url = "https://bustime.mta.info/api/siri/stop-monitoring.json"
-monitoring_params = {
+STOP_MONITORING_URL = "https://bustime.mta.info/api/siri/stop-monitoring.json"
+MONITORING_PARAMS = {
     "key": API_KEY,
     "MonitoringRef": STOP_ID
 }
 
-response = requests.get(stop_monitoring_url, params=monitoring_params)
-data = response.json()
+###############
+# Class       #
+###############
 
-stop_name = None
+class BusData:
+    def __init__(self, line, destination, eta_raw, distance_away, stops_away, bus_id, stop_name):
+        self.line = line
+        self.destination = destination
+        self.eta = self.eta_parser(eta_raw) # gives you a response like 8:30 AM
+        self.minutes_away = self.compute_minutes_away(eta_raw)
+        self.distance_away = distance_away
+        self.stops_away = stops_away
+        self.bus_id = bus_id
+        self.stop_name = stop_name
 
-try:
-    delivery = data["Siri"]["ServiceDelivery"]["StopMonitoringDelivery"][0]
-    visits = delivery.get("MonitoredStopVisit", [])
-    print(visits)
+    def eta_parser(self, eta_raw):
+        try:
+            eta_dt = datetime.fromisoformat(str(eta_raw))
+            eta_str = eta_dt.strftime("%-I:%M %p") 
+            return eta_str  
+        except ValueError:
+            return None
+        
+    def compute_minutes_away(self, eta_raw):
+        try:
+            eta_dt = datetime.fromisoformat(eta_raw)
+            now = datetime.now(eta_dt.tzinfo) if eta_dt.tzinfo else datetime.now()
+            delta = eta_dt - now
+            return max(int(delta.total_seconds() / 60), 0)  # avoid negative minutes
+        except Exception:
+            return -1 
+    
+    def bus_ticket_string(self):
+        match self.eta:
+            case None:
+                return f"Next {self.line} bus at {self.stop_name} is {self.distance_away}" 
+            case _:  
+                return f"Next {self.line} bus at {self.stop_name} is {self.minutes_away} minutes away, arriving at {self.eta}"
+    
+    def __repr__(self):
+        return (
+            f"<BusData>\n"
+            f"  line={self.line}\n"
+            f"  destination={self.destination}\n"
+            f"  eta={self.eta}\n"
+            f"  minutes_away={self.minutes_away}\n"
+            f"  distance_away={self.distance_away}\n"
+            f"  stops_away={self.stops_away}\n"
+            f"  bus_id={self.bus_id}\n"
+            f"  stop_name={self.stop_name}\n"
+        )
 
-    if visits:
-        for visit in visits[:3]:  # Limit to first 3
-            journey = visit["MonitoredVehicleJourney"]
-            print(journey)
-            line = journey["LineRef"]
-            destination = journey["DestinationName"]
-            location = journey["VehicleLocation"]
-            eta_raw = journey["MonitoredCall"].get("ExpectedArrivalTime")
+###############
+# Function    #
+###############
 
-            # Format ETA (if available)
-            if eta_raw:
-                eta_dt = datetime.fromisoformat(eta_raw)
-                now = datetime.now(eta_dt.tzinfo)  # respect timezone from MTA
-                eta_str = eta_dt.strftime("%B %-d, %Y %-I:%M %p")  # or use %d, %I for Windows
-                minutes_left = int((eta_dt - now).total_seconds() / 60)
-
-                red = "\033[91m"
-                reset = "\033[0m"
-                print(f"🚌 Bus {line} to {destination}")
-                print(f" → Location: {location}")
-                print(f" → ETA: {eta_str}")
-                print(f" ⏳ Arrival in: {red}{minutes_left} minute(s){reset}\n")
-            else:
-                print(f"🚌 Bus {line} to {destination}")
-                print(f" → Location: {location}")
-                print(" → ETA: Unknown\n")
-
-        # Try to get stop name from live data
-        stop_name = visits[0]["MonitoredVehicleJourney"]["MonitoredCall"]["StopPointName"]
-    else:
-        print("✅ No buses currently being tracked for this stop.")
-
-except KeyError as e:
-    print(f"❌ Could not process real-time API response. Missing key: {e}")
-
-# --- Step 2: Fallback to get stop name via static stop metadata API ---
-if not stop_name:
-    stop_lookup_url = f"https://bustime.mta.info/api/where/stop.json"
-    stop_params = {
-        "key": API_KEY,
-        "stopId": f"MTA_{STOP_ID}"
-    }
-    stop_response = requests.get(stop_lookup_url, params=stop_params)
-    stop_data = stop_response.json()
+def get_realtime_bus_updates():
+# --- Get real-time bus info ---
+    response = requests.get(STOP_MONITORING_URL, params=MONITORING_PARAMS)
+    data = response.json()
+    pretty_json = json.dumps(data, indent=4)
+    # print(pretty_json) # Shows an indent formatted debig statement of the json data from the MTA.
+    stop_name = None # Will get overwritten, hopefully, weird way to catch an error.
+    
+    busses = [] # Drop in bus objects
 
     try:
-        stop_name = stop_data["data"]["stop"]["name"]
-    except KeyError:
-        stop_name = "Unknown Stop Name"
+        delivery = data["Siri"]["ServiceDelivery"]["StopMonitoringDelivery"][0]
+        visits = delivery.get("MonitoredStopVisit", [])
 
-# --- Final Output ---
-print(f"📍 Stop Name: {stop_name}")
+        if visits:
+            for visit in visits[:3]:  # Limit to first 3
+                journey = visit["MonitoredVehicleJourney"]
+                line = journey["PublishedLineName"]
+                destination = journey["DestinationName"]
+                location = journey["VehicleLocation"]
+                eta_raw = journey["MonitoredCall"].get("ExpectedArrivalTime")
+                distance_away = journey["MonitoredCall"]["Extensions"]["Distances"]["PresentableDistance"]
+                stops_away = journey["MonitoredCall"]["Extensions"]["Distances"]["StopsFromCall"]
+                bus_id = journey["VehicleRef"]
+                stop_name = journey["MonitoredCall"]["StopPointName"]
 
+                # create a BusData object and append to Busses list
+                busses.append(BusData(line, destination, eta_raw, distance_away, stops_away, bus_id, stop_name))
+
+    except KeyError as e:
+        print(f"❌ Could not process real-time API response. Missing key: {e}")
+        return
+
+    return busses
+
+###############
+# Debug       #
+###############
+
+if __name__ == "__main__":
+    busses = get_realtime_bus_updates()
+    print([m.bus_ticket_string() for m in busses])
+
+    print(busses)
