@@ -1,4 +1,4 @@
-from sense_hat import SenseHat
+from sense_emu import SenseHat
 import time
 import colorsys
 

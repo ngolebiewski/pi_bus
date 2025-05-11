@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import os
 import requests
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 
 ###############
 # Globals     #
@@ -79,7 +79,7 @@ def get_realtime_bus_updates():
     response = requests.get(STOP_MONITORING_URL, params=MONITORING_PARAMS)
     data = response.json()
     pretty_json = json.dumps(data, indent=4)
-    # print(pretty_json) # Shows an indent formatted debig statement of the json data from the MTA.
+    # print(pretty_json) # Shows an indent formatted debug statement of the json data from the MTA.
     stop_name = None # Will get overwritten, hopefully, weird way to catch an error.
     
     busses = [] # Drop in bus objects
