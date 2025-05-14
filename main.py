@@ -20,7 +20,7 @@ def flash_red():
 def display_messages(messages):
     for msg in messages:
         print(msg)
-        sense.show_message(msg, scroll_speed=0.05, text_color=(255, 255, 0))
+        sense.show_message(msg, scroll_speed=0.1, text_colour=(255, 255, 0))
 
 while True:
     try:
@@ -44,5 +44,5 @@ while True:
         time.sleep(5)
 
     except Exception as e:
-        sense.show_message(f"Error: {str(e)}", scroll_speed=0.05, text_color=(255, 0, 0))
+        sense.show_message(f"Error: {str(e)}", scroll_speed=0.1, text_colour=(255, 0, 0))
         time.sleep(10)
