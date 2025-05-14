@@ -16,9 +16,9 @@ def flash_red():
         sense.clear()
         time.sleep(0.3)
 
-def display_messages(messages, text_color=(255, 255, 0)):
+def display_messages(messages):
     for msg in messages:
-        sense.show_message(msg, scroll_speed=0.05, text_color=text_color)
+        sense.show_message(msg, scroll_speed=0.05, text_color=(255, 255, 0))
 
 while True:
     try:
