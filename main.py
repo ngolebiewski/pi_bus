@@ -1,6 +1,6 @@
 from api_bus_stop import BusData, get_realtime_bus_updates
 from hat_animations import smooth_rainbow_wave, realistic_fire
-from sense_emu import SenseHat
+# from sense_emu import SenseHat
 from sense_hat import SenseHat
 import time
 

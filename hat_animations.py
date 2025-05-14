@@ -1,4 +1,4 @@
-from sense_emu import SenseHat
+# from sense_emu import SenseHat
 from sense_hat import SenseHat
 import time
 import colorsys
@@ -30,8 +30,6 @@ def smooth_rainbow_wave(duration=3, speed=0.05):
         time.sleep(speed)
 
     sense.clear()
-
-import random
 
 def realistic_fire(duration=3, speed=0.05):
     """
