@@ -120,6 +120,9 @@ def get_realtime_bus_updates():
 
     return busses
 
+def current_time():
+    return datetime.now().strftime("%I:%M %p").lstrip("0")
+
 ###############
 # Debug       #
 ###############
