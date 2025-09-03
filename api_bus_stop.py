@@ -11,7 +11,8 @@ import math
 
 load_dotenv()
 API_KEY = os.getenv("MTA_API_KEY")
-STOP_ID = "401220" # This should become a user settable field!!!!!!! Maybe make an argparser with this number as the default.
+# STOP_ID = "401220" # This should become a user settable field!!!!!!! Maybe make an argparser with this number as the default.
+STOP_ID = "401608" # This should become a user settable field!!!!!!! Maybe make an argparser with this number as the default.
 
 STOP_MONITORING_URL = "https://bustime.mta.info/api/siri/stop-monitoring.json"
 MONITORING_PARAMS = {
@@ -56,14 +57,14 @@ class BusData:
             case None:
                 return f"Next {self.line} bus at {self.stop_name} is {self.distance_away}" 
             case _:  
-                return f"Next {self.line} bus at {self.stop_name} is {self.minutes_away} minutes away, arriving at {self.eta}"
+                return f"Next {self.line} bus at {self.stop_name} is {self.minutes_away} minutes away, departing at {self.eta}"
             
     def bus_string_short(self):
         match self.eta:
             case None:
                 return f"Next {self.line} is {self.distance_away}" 
             case _:  
-                return f"Next {self.line} is {self.minutes_away} minutes away, arriving at {self.eta}"
+                return f"Next {self.line} is {self.minutes_away} minutes away, departing at {self.eta}"
     
     def stop_info(self):
         return f"{self.line} at {self.stop_name} to {self.destination}"
@@ -90,7 +91,7 @@ def get_realtime_bus_updates():
     response = requests.get(STOP_MONITORING_URL, params=MONITORING_PARAMS)
     data = response.json()
     pretty_json = json.dumps(data, indent=4)
-    # print(pretty_json) # Shows an indent formatted debug statement of the json data from the MTA.
+    print(pretty_json) # Shows an indent formatted debug statement of the json data from the MTA.
     stop_name = None # Will get overwritten, hopefully, weird way to catch an error.
     
     busses = [] # Drop in bus objects
@@ -105,7 +106,7 @@ def get_realtime_bus_updates():
                 line = journey["PublishedLineName"]
                 destination = journey["DestinationName"]
                 location = journey["VehicleLocation"]
-                eta_raw = journey["MonitoredCall"].get("ExpectedArrivalTime")
+                eta_raw = journey["MonitoredCall"].get("ExpectedDepartureTime")
                 distance_away = journey["MonitoredCall"]["Extensions"]["Distances"]["PresentableDistance"]
                 stops_away = journey["MonitoredCall"]["Extensions"]["Distances"]["StopsFromCall"]
                 bus_id = journey["VehicleRef"]
